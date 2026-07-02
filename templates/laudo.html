@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Laudo Laboratorial</title>
+    <style>
+        /* Configurações da Página para o WeasyPrint */
+        @page {
+            size: A4;
+            margin: 20mm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 10px;
+                color: #777;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+        
+        /* Cabeçalho Médico Estilizado */
+        .header-container {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 25px;
+            background-color: #f9f9f9;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0056b3;
+            margin-top: 0;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .patient-info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .patient-info-table td {
+            padding: 4px 6px;
+            font-size: 13px;
+            vertical-align: top;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+            width: 12%;
+        }
+        
+        .info-value {
+            color: #000;
+        }
+
+        /* Estilos da Tabela de Exames */
+        .exams-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .exams-table th {
+            background-color: #0056b3;
+            color: white;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #0056b3;
+        }
+
+        .exams-table td {
+            padding: 10px;
+            font-size: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            border-left: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        /* Cores Alternadas nas Linhas */
+        .exams-table tragic:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+
+        .code-col {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #666;
+            width: 15%;
+        }
+
+        /* Badges de Status e Resultados */
+        .badge-positive {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid #f5c6cb;
+            display: inline-block;
+        }
+
+        .badge-negative {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid #c3e6cb;
+            display: inline-block;
+        }
+
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid #ffeeba;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="header-title">Relatório Consolidado de Exames</div>
+        <table class="patient-info-table">
+            <tr>
+                <td class="info-label">Paciente:</td>
+                <td class="info-value" colspan="3"><strong>{{ nome_paciente }}</strong></td>
+            </tr>
+            <tr>
+                <td class="info-label">CPF:</td>
+                <td class="info-value" style="width: 40%;">{{ cpf_paciente }}</td>
+                <td class="info-label" style="width: 15%;">Nascimento:</td>
+                <td class="info-value">{{ data_nascimento }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="exams-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">Cód. Exame</th>
+                <th style="width: 50%;">Procedimento / Exame</th>
+                <th style="width: 20%;">Resultado</th>
+                <th style="width: 15%;">Data Liberação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ tabela_linhas }}
+        </tbody>
+    </table>
+
+</body>
+</html>
