@@ -4,15 +4,55 @@
     <meta charset="UTF-8">
     <title>Laudo de Exames</title>
     <style>
+        /* 1. Regra Geral para TODAS as páginas */
         @page {
             size: A4;
-            margin: 20mm;
+            margin-top: 35mm;
+            margin-bottom: 25mm;
+            margin-left: 20mm;
+            margin-right: 20mm;
+
+            /* Mantemos apenas o título à esquerda no topo (pág. 2 em diante) */
+            @top-left {
+                content: "Departamento de Saúde do NIS • Relatório de Evolução do Paciente";
+                font-size: 9px;
+                color: #666;
+                font-family: Arial, sans-serif;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 5px;
+            }
+
+            /* Limpamos o topo direito (onde estava a data antes) */
+            @top-right {
+                content: "";
+                border: none;
+            }
+
+            /* Rodapé esquerdo centralizando todas as informações institucionais */
+            @bottom-left {
+                content: "{{ carimbo_geracao_nis }}";
+                font-size: 8px; /* Reduzido levemente para caber o bloco todo em duas linhas */
+                color: #666;
+                font-family: Arial, sans-serif;
+                line-height: 1.4;
+            }
+
+            /* Contador de páginas impecável no canto direito */
             @bottom-right {
                 content: "Página " counter(page) " de " counter(pages);
-                font-size: 11px;
-                color: #555;
+                font-size: 10px;
+                color: #666;
                 font-family: Arial, sans-serif;
             }
+        }
+
+        /* 2. Regra Exclusiva para a PRIMEIRA página */
+        @page :first {
+            @top-left {
+                content: "";
+                border: none;
+            }
+            margin-top: 20mm; 
         }
 
         body {
