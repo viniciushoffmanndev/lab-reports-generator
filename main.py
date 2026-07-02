@@ -62,8 +62,9 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
     try:
         # Nova Query robusta que cruza os exames com o cadastro central do CadSUS
         # Nova Query com DISTINCT ON para eliminar registros duplicados gerados pelos JOINs
+        # Query definitiva: Alinha o DISTINCT ON estritamente com a granularidade dos procedimentos
         query = """
-            SELECT DISTINCT ON (er.cd_exame, p.cd_exame_procedimento, er.dt_resultado)
+            SELECT DISTINCT ON (er.cd_exame, p.cd_exame_procedimento)
                 er.cd_exame,
                 p.ds_procedimento,
                 er.ds_resultado,   
@@ -77,7 +78,7 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
             INNER JOIN usuario_cadsus c ON a.cd_usu_cadsus = c.cd_usu_cadsus
             WHERE e.nm_paciente = $1 
               AND c.dt_nascimento = $2
-            ORDER BY er.cd_exame, p.cd_exame_procedimento, er.dt_resultado;
+            ORDER BY er.cd_exame, p.cd_exame_procedimento;
         """
         
         # Executa passando os dois parâmetros obrigatórios de forma segura ($1 e $2)
