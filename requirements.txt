@@ -1,0 +1,6 @@
+fastapi>=0.110.0 # O core da nossa API assíncrona.
+uvicorn[standard]>=0.28.0 # O servidor web ultraveloz para rodar o FastAPI.
+asyncpg>=0.29.0 # O driver assíncrono para o Neon/PostgreSQL.
+python-dotenv>=1.0.1 # Para ler o arquivo .env de forma segura.
+weasyprint>=61.0 # Motor moderno para converter nosso HTML/CSS em um PDF impecável.
+pydantic>=2.6.0 # Para validação estrita de dados (como garantir que o nome do paciente não venha vazio).
