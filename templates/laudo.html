@@ -2,114 +2,125 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Laudo Laboratorial</title>
+    <title>Laudo de Exames</title>
     <style>
-        /* Configurações da Página para o WeasyPrint */
         @page {
             size: A4;
             margin: 20mm;
             @bottom-right {
                 content: "Página " counter(page) " de " counter(pages);
-                font-size: 10px;
-                color: #777;
+                font-size: 11px;
+                color: #555;
+                font-family: Arial, sans-serif;
             }
         }
 
         body {
             font-family: Arial, sans-serif;
-            color: #333;
+            color: #000;
             margin: 0;
             padding: 0;
             line-height: 1.4;
         }
-        
-        /* Cabeçalho Médico Estilizado */
-        .header-container {
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 15px;
-            margin-bottom: 25px;
-            background-color: #f9f9f9;
+
+        /* Estrutura do Topo Governamental */
+        .gov-header {
+            width: 100%;
+            margin-bottom: 35px;
+            position: relative;
+            min-height: 95px;
         }
-        
-        .header-title {
+
+        .gov-logo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 85px;
+            height: auto;
+        }
+
+        .gov-titles {
+            text-align: center;
+            margin-left: 95px; /* Abre espaço exato para o brasão à esquerda */
+            padding-top: 5px;
+        }
+
+        .gov-main-title {
             font-size: 18px;
             font-weight: bold;
-            color: #0056b3;
-            margin-top: 0;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #0056b3;
-            padding-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin: 0 0 6px 0;
         }
-        
-        .patient-info-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .patient-info-table td {
-            padding: 4px 6px;
-            font-size: 13px;
-            vertical-align: top;
-        }
-        
-        .info-label {
+
+        .gov-sub-title {
+            font-size: 16px;
             font-weight: bold;
-            color: #555;
-            width: 12%;
+            margin: 0 0 20px 0;
         }
-        
-        .info-value {
+
+        .report-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 15px 0 0 0;
+        }
+
+        /* Bloco de Identificação do Paciente (Variavéis na Ordem do Modelo) */
+        .patient-card {
+            width: 100%;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .patient-name-row {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .patient-meta-row {
+            margin-bottom: 6px;
             color: #000;
         }
 
-        /* Estilos da Tabela de Exames */
+        /* Estilização da Tabela de Exames */
         .exams-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            font-size: 13px;
         }
 
         .exams-table th {
             background-color: #0056b3;
             color: white;
+            font-weight: bold;
+            text-align: left;
+            padding: 10px;
             font-size: 12px;
             text-transform: uppercase;
-            padding: 10px;
-            text-align: left;
             border: 1px solid #0056b3;
         }
 
         .exams-table td {
             padding: 10px;
-            font-size: 12px;
             border-bottom: 1px solid #e0e0e0;
             border-left: 1px solid #e0e0e0;
             border-right: 1px solid #e0e0e0;
-        }
-
-        /* Cores Alternadas nas Linhas */
-        .exams-table tragic:nth-child(even) {
-            background-color: #fcfcfc;
+            vertical-align: middle;
         }
 
         .code-col {
-            font-family: 'Courier New', monospace;
             font-weight: bold;
-            color: #666;
-            width: 15%;
+            color: #333;
         }
 
-        /* Badges de Status e Resultados */
+        /* Badges de Resultado */
         .badge-positive {
             background-color: #f8d7da;
             color: #721c24;
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
-            border: 1px solid #f5c6cb;
+            font-size: 12px;
             display: inline-block;
         }
 
@@ -119,7 +130,7 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
-            border: 1px solid #c3e6cb;
+            font-size: 12px;
             display: inline-block;
         }
 
@@ -129,27 +140,29 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
-            border: 1px solid #ffeeba;
+            font-size: 12px;
             display: inline-block;
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <div class="header-title">Relatório Consolidado de Exames</div>
-        <table class="patient-info-table">
-            <tr>
-                <td class="info-label">Paciente:</td>
-                <td class="info-value" colspan="3"><strong>{{ nome_paciente }}</strong></td>
-            </tr>
-            <tr>
-                <td class="info-label">CPF:</td>
-                <td class="info-value" style="width: 40%;">{{ cpf_paciente }}</td>
-                <td class="info-label" style="width: 15%;">Nascimento:</td>
-                <td class="info-value">{{ data_nascimento }}</td>
-            </tr>
-        </table>
+    <div class="gov-header">
+        <img class="gov-logo" src="../static/img/brasao.webp" alt="Brasão Paraguaçu Paulista">
+        
+        <div class="gov-titles">
+            <div class="gov-main-title">Prefeitura da Estância Turística de Paraguaçu Paulista</div>
+            <div class="gov-sub-title">Secretaria Municipal de Saúde</div>
+            <div class="report-title">Relatório de Evolução do Paciente</div>
+        </div>
+    </div>
+
+    <div class="patient-card">
+        <div class="patient-name-row">Paciente: {{ nome_paciente }}</div>
+        <div class="patient-meta-row">
+            Data de Nascimento: {{ data_nascimento }} | CNS: {{ cns_paciente }} | CPF: {{ cpf_paciente }}
+        </div>
+        <div class="patient-meta-row">Nome da Mãe: {{ nome_mae }}</div>
     </div>
 
     <table class="exams-table">

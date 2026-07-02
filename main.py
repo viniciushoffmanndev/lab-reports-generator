@@ -1,9 +1,10 @@
 import os
 import sys
-import io  # <-- CORREÇÃO 1: Faltava importar o io para o BytesIO
+import io
 
 # Pega o caminho absoluto da pasta raiz do projeto de forma dinâmica
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 # Conecta até a pasta bin que você listou no comando tree
 gtk_bin_path = os.path.join(BASE_DIR, "libs", "gtk", "bin")
@@ -23,7 +24,7 @@ else:
 # -------------------------------------------------------------
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field  # <-- CORREÇÃO 2: Faltava importar para validar o PacienteRequest
+from pydantic import BaseModel, Field
 from weasyprint import HTML
 from datetime import datetime
 
@@ -41,14 +42,10 @@ class PacienteRequest(BaseModel):
 
 @app.post("/api/v1/relatorios/pdf")
 async def gerar_relatorio_pdf(request: PacienteRequest):
-    # 1. Aqui capturamos o nome enviado pelo utilizador
     nome_busca = request.nome.strip().upper()
-    
-    # 2. Criamos a variável 'data_string' capturando o texto enviado pelo utilizador
-    data_string = request.data_nascimento.strip() # Ela guarda o texto puro, ex: '1997-05-20'
+    data_string = request.data_nascimento.strip()
     
     try:
-        # 3. Aqui convertemos o TEXTO da 'data_string' em um objeto do tipo DATE do Python
         data_busca = datetime.strptime(data_string, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(
@@ -56,13 +53,11 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
             detail="Formato de data de nascimento inválido. Use o padrão YYYY-MM-DD."
         )
 
-    # 1. Conexão com o Banco Neon
     conn = await get_db_connection()
     
     try:
-        # Nova Query robusta que cruza os exames com o cadastro central do CadSUS
-        # Nova Query com DISTINCT ON para eliminar registros duplicados gerados pelos JOINs
-        # Query definitiva: Alinha o DISTINCT ON estritamente com a granularidade dos procedimentos
+        # Query com granularidade correta e inclusão das colunas de CNS e Nome da Mãe
+        # Query Oficial e Definitiva: Busca o CNS na tabela correta via LEFT JOIN
         query = """
             SELECT DISTINCT ON (er.cd_exame, p.cd_exame_procedimento)
                 er.cd_exame,
@@ -70,18 +65,20 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
                 er.ds_resultado,   
                 er.dt_resultado,
                 c.cpf,
-                c.dt_nascimento
+                c.dt_nascimento,
+                cns.cd_numero_cartao AS cns, -- Mudança aqui: Pegando da tabela correta!
+                c.nm_mae
             FROM exame_requisicao er
             INNER JOIN exame e ON er.cd_exame = e.cd_exame
             INNER JOIN exame_procedimento p ON er.cd_exame_procedimento = p.cd_exame_procedimento
             INNER JOIN agenda_gra_ate_horario a ON e.nm_paciente = a.nm_paciente
             INNER JOIN usuario_cadsus c ON a.cd_usu_cadsus = c.cd_usu_cadsus
-            WHERE e.nm_paciente = $1 
+            LEFT JOIN usuario_cadsus_cns cns ON c.cd_usu_cadsus = cns.cd_usu_cadsus AND cns.st_excluido = 0
+            WHERE REGEXP_REPLACE(TRIM(e.nm_paciente), '\s+', ' ', 'g') = REGEXP_REPLACE(TRIM($1), '\s+', ' ', 'g')
               AND c.dt_nascimento = $2
             ORDER BY er.cd_exame, p.cd_exame_procedimento;
         """
         
-        # Executa passando os dois parâmetros obrigatórios de forma segura ($1 e $2)
         registros = await conn.fetch(query, nome_busca, data_busca)
         
         if not registros:
@@ -90,11 +87,12 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
                 detail=f"Nenhum registro encontrado para o paciente '{nome_busca}' com a data de nascimento '{data_busca}'."
             )
         
-        # Capturamos o CPF do primeiro registro encontrado para usar no cabeçalho do PDF
-        # Se por acaso o CPF estiver nulo no banco, tratamos para não quebrar
+        # Mapeamento seguro das variáveis cadastrais do primeiro registro
         cpf_paciente = registros[0]['cpf'] if registros[0]['cpf'] else "Não informado"
+        cns_paciente = str(registros[0]['cns']) if registros[0]['cns'] else "Não informado"
+        nome_mae = registros[0]['nm_mae'] if registros[0]['nm_mae'] else "Não informado"
         
-        # 2. Construção das linhas da tabela HTML (Prevenção de Nulos)
+        # Construção dinâmica das linhas da tabela HTML
         tabela_linhas = ""
         for row in registros:
             resultado_bruto = row['ds_resultado'] if row['ds_resultado'] is not None else "Pendente"
@@ -118,28 +116,28 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
                 </tr>
             """
         
-        # 3. Leitura e Renderização do HTML
+        # Leitura do arquivo de template
         template_path = os.path.join(BASE_DIR, "templates", "laudo.html")
         with open(template_path, "r", encoding="utf-8") as f:
             html_content = f.read()
         
-        # FORMA RECOMENDADA: Formata o objeto date diretamente para o padrão BR (Dia/Mês/Ano)
         data_nascimento_br = data_busca.strftime("%d/%m/%Y")
 
-        # Formatamos o CPF adicionando os pontos e traço (ex: 123.456.789-00) caso venha puro do banco
         if len(cpf_paciente) == 11 and cpf_paciente.isdigit():
             cpf_formatado = f"{cpf_paciente[:3]}.{cpf_paciente[3:6]}.{cpf_paciente[6:9]}-{cpf_paciente[9:]}"
         else:
             cpf_formatado = cpf_paciente
 
-        # Substitui os placeholders antigos e os novos no HTML
+        # Cadeia de substituição sequencial corrigida em html_final
         html_final = html_content.replace("{{ nome_paciente }}", nome_busca)
         html_final = html_final.replace("{{ data_nascimento }}", data_nascimento_br)
         html_final = html_final.replace("{{ cpf_paciente }}", cpf_formatado)
+        html_final = html_final.replace("{{ cns_paciente }}", cns_paciente)
+        html_final = html_final.replace("{{ nome_mae }}", nome_mae)
         html_final = html_final.replace("{{ tabela_linhas }}", tabela_linhas)
         
-        # 4. Geração do PDF em memória
-        pdf_bytes = HTML(string=html_final).write_pdf()
+        # Geração do PDF em memória apontando a base_url para a pasta static
+        pdf_bytes = HTML(string=html_final, base_url=STATIC_DIR).write_pdf()
         pdf_stream = io.BytesIO(pdf_bytes)
         
         nome_arquivo_slug = nome_busca.replace(" ", "_").lower()
@@ -157,4 +155,3 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         raise HTTPException(status_code=500, detail="Erro interno ao gerar o laudo médico.")
     finally:
         await conn.close()
-        
