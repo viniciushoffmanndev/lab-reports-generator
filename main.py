@@ -91,6 +91,19 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         cpf_paciente = registros[0]['cpf'] if registros[0]['cpf'] else "Não informado"
         cns_paciente = str(registros[0]['cns']) if registros[0]['cns'] else "Não informado"
         nome_mae = registros[0]['nm_mae'] if registros[0]['nm_mae'] else "Não informado"
+       # Captura a data atual e formata por extenso
+        meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", 
+                 "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+        hoje = datetime.now()
+        data_geracao_extenso = f"{hoje.day} de {meses[hoje.month - 1]} de {hoje.year}"
+        hora_minuto = hoje.strftime("%H:%M")
+        
+        # String do carimbo de data/hora
+        carimbo_hora = f"Relatório gerado em {data_geracao_extenso} às {hora_minuto} pela equipe do NIS."
+        frase_confidencial = "Departamento de Saúde - NIS"
+        
+        # Combinamos ambas em uma única tag para o HTML, separadas por um pipe
+        texto_rodape_completo = f"{frase_confidencial} | {carimbo_hora}"
         
         # Construção dinâmica das linhas da tabela HTML
         tabela_linhas = ""
@@ -134,6 +147,7 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         html_final = html_final.replace("{{ cpf_paciente }}", cpf_formatado)
         html_final = html_final.replace("{{ cns_paciente }}", cns_paciente)
         html_final = html_final.replace("{{ nome_mae }}", nome_mae)
+        html_final = html_final.replace("{{ carimbo_geracao_nis }}", texto_rodape_completo)
         html_final = html_final.replace("{{ tabela_linhas }}", tabela_linhas)
         
         # Geração do PDF em memória apontando a base_url para a pasta static
