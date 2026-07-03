@@ -46,7 +46,7 @@ LAB-REPORTS-GENERATOR/
 ## 🧠 Arquitetura do Sistema
 O sistema foi estruturado com foco em portabilidade autônoma em servidores Windows e isolamento de responsabilidades:
 
-# ⚙️ Engine de Renderização & Dependências (/libs & /templates)
+## ⚙️ Engine de Renderização & Dependências (/libs & /templates)
 
 **database.py / main.py:** Camada que extrai os dados, realiza o tratamento preventivo de strings vazias e prepara o payload para o template engine Jinja2 injetar no arquivo templates/laudo.html.
 
