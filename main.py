@@ -69,7 +69,7 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         hoje = datetime.now()
         data_geracao_extenso = f"{hoje.day} de {meses[hoje.month - 1]} de {hoje.year}"
         hora_minuto = hoje.strftime("%H:%M")
-        carimbo_hora = f"Relatório gerado em {data_geracao_extenso} às {hora_minuto} hours"
+        carimbo_hora = f"Relatório gerado em {data_geracao_extenso} às {hora_minuto} horas"
         texto_rodape_completo = carimbo_hora
         
         # Construção dinâmica das linhas da tabela HTML
