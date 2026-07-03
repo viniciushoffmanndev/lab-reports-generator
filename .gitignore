@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Testes locais e relatórios de queries
+test/outputs/
+
