@@ -1,41 +1,32 @@
-# 🏥 Lab Reports Generator — NIS
+<p align="center">
+  <img src="https://img.shields.io/badge/PYTHON-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/FASTAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/JINJA2-B41717?style=for-the-badge&logo=jinja&logoColor=white" />
+  <img src="https://img.shields.io/badge/WEASYPRINT-525M88?style=for-the-badge&logo=render&logoColor=white" />
+</p>
 
-Gerador automatizado de relatórios e laudos ambulatoriais para o **Núcleo de Informação em Saúde (NIS)** da Prefeitura da Estância Turística de Paraguaçu Paulista. O sistema consome dados de exames laboratoriais, cruza informações cadastrais e gera um documento PDF oficial, padronizado e altamente legível chamado **Espelho de Exames Laboratoriais**.
+<h2 align="center">🏥 Lab Reports Generator — NIS 🏥</h2>
 
 ---
 
-## 🛠️ Stack Tecnológica & Dependências Nativas
+## 🎯 Objetivo do Projeto
+Gerador automatizado e padronizado de documentos ambulatoriais para o **Núcleo de Informação em Saúde (NIS)** da Prefeitura da Estância Turística de Paraguaçu Paulista. O sistema consome dados brutos de exames lançados após a triagem, cruza informações cadastrais do CadSUS e gera o **Espelho de Exames Laboratoriais**, um documento oficial em PDF altamente legível e otimizado tanto para auditoria interna quanto para o paciente levar para casa.
 
-O projeto é desenvolvido em **Python** utilizando o ecossistema moderno de APIs. Para a conversão fiel de layouts HTML/CSS complexos para formato PDF (respeitando regras normativas de quebras de página e folhas A4), utilizamos o **WeasyPrint**.
+---
 
-Como o ambiente Windows necessita dos binários de renderização gráfica do GNOME, o projeto distribui de forma portável as bibliotecas do **GTK+** dentro da estrutura do repositório.
-
-### 🗄️ Estrutura de Bibliotecas Dinâmicas (`/libs`)
-
-A pasta `libs/gtk/bin/` encapsula todas as dependências em C/C++ necessárias para a engine gráfica de PDF rodar no ecossistema Windows:
-
-* **`libcairo-2.dll` / `libpixman-1-0.dll`**: Responsáveis por desenhar os vetores, imagens e formas geométricas nas páginas.
-* **`libpango-1.0-0.dll` / `libfontconfig-1.dll`**: Gerenciam a tipografia, internacionalização e o carregamento das fontes do relatório.
-* **`libxml2-2.dll` / `libxslt-1.dll`**: Processam os dados de marcação estrutural do documento HTML.
-* **`libgdk-3-0.dll` / `libgtk-3-0.dll`**: Core do toolkit gráfico que amarra as dependências de renderização.
-
-### 📄 Camada de Visão (`/templates`)
-
-A pasta `templates/` contém a estrutura visual e esqueleto de marcação do documento:
-
-* **`laudo.html`**: Template HTML5 estilizado com CSS Paged Media (regras `@page`). Ele utiliza marcadores do Jinja2 e tags de substituição dinâmicas (como `{{ carimbo_geracao_nis }}`) que são processadas em tempo de execução pelo backend antes de enviar o fluxo de dados para a engine do WeasyPrint.
-
-# 🏥 Lab Reports Generator — NIS
-
-Gerador automatizado e padronizado de documentos ambulatoriais para o **Núcleo de Informação em Saúde (NIS)** da Prefeitura da Estância Turística de Paraguaçu Paulista. O sistema consome dados brutos de exames lançados após a triagem e gera o **Espelho de Exames Laboratoriais**, um documento oficial em PDF otimizado tanto para auditoria interna quanto para o paciente levar para casa.
+## ✨ Funcionalidades
+* **Geração de PDF Clínico**: Conversão fiel de layouts complexos HTML5/CSS para formato A4.
+* **Tratamento Dinâmico CadSUS**: Validação com travas de segurança (`fallback`) que injetam automaticamente "Não informado" para CPFs, CNSs ou nomes de mãe ausentes no banco.
+* **Cabeçalhos Fluidos**: Layout inteligente que exibe o Brasão e dados municipais na primeira página e um cabeçalho técnico reduzido nas páginas seguintes.
+* **Carimbo de Auditoria**: Emissão de rodapé integrado contendo a data de geração por extenso e o horário exato (`HH:MM`) em formato de texto.
 
 ---
 
 ## 📂 Estrutura do Projeto
-
 ```text
 LAB-REPORTS-GENERATOR/
 ├── 📁 libs/             # Binários portáveis do GTK+ (Core gráfico do WeasyPrint para Windows)
+│   └── 📁 gtk/bin/      # DLLs nativas essenciais (Cairo, Pango, Pixman, GLib, etc.)
 ├── 📁 static/           # Arquivos estáticos globais da aplicação
 │   └── 📁 img/          # Banco de mídias e assets visuais do sistema
 │       └── brasao.webp  # Brasão Oficial da Estância Turística de Paraguaçu Paulista
@@ -51,6 +42,21 @@ LAB-REPORTS-GENERATOR/
 ```
 
 ---
+
+## 🧠 Arquitetura do Sistema
+O sistema foi estruturado com foco em portabilidade autônoma em servidores Windows e isolamento de responsabilidades:
+
+⚙️ Engine de Renderização & Dependências (/libs & /templates)
+database.py / main.py: Camada que extrai os dados, realiza o tratamento preventivo de strings vazias e prepara o payload para o template engine Jinja2 injetar no arquivo templates/laudo.html.
+Portabilidade Gráfica do WeasyPrint: Para evitar instalações complexas no sistema operacional do servidor, a pasta libs/gtk/bin/ distribui as DLLs em C/C++ nativas do GNOME:
+libcairo-2.dll / libpixman-1-0.dll: Desenho vetorial e renderização geométrica.
+libpango-1.0-0.dll / libfontconfig-1.dll: Mapeamento tipográfico e fontes.
+libxml2-2.dll / libxslt-1.dll: Processamento estrutural do HTML.
+
+---
+
+### 🔀 Diagrama de Sequência e Ciclo de Vida do Relatório
+O diagrama de sequência abaixo ilustra de forma técnica a jornada da informação e a interação entre os componentes do sistema, desde a entrada do paciente até o recebimento do documento impresso:
 
 ```mermaid
 sequenceDiagram
@@ -88,14 +94,13 @@ sequenceDiagram
 # Regras Normativas de Layout Aplicadas
 O documento foi projetado sob réguas de design clínico e legibilidade hospitalar:
 
-## Quebras de Página Inteligentes
-- Configurado via CSS (tr { page-break-inside: avoid; }) para impedir que uma linha de resultado de exame longo (ex: Hemograma) seja fatiada ao meio entre duas páginas.
-## Hierarquia Tipográfica 
-- Título com peso e destaque visual (18px) contrastando com o corpo de dados compacto (10px), o que reduz o desperdício de papel e otimiza o escaneamento visual da equipe de enfermagem.
-## Cabeçalhos Fluidos
-- Primeira página dedicada ao Brasão e Identificação Municipal. Páginas secundárias limpas, exibindo apenas o cabeçalho técnico simplificado do NIS.
-## Carimbo de Auditoria 
-- Rodapé dinâmico integrado que exibe de forma clara a data por extenso e o horário exato da geração (.strftime("%H:%M")) para controle de retirada.
+**Quebras de Página Inteligentes:** Configurado via CSS Paged Media (tr { page-break-inside: avoid; }) para impedir que uma linha de resultado de exame longo (como o Hemograma) seja fatiada horizontalmente entre duas páginas.
+
+**Hierarquia Tipográfica:** O título principal recebe destaque com tamanho expandido (18px) contrastando com os dados da tabela em fonte compacta (10px). Isso otimiza o escaneamento visual para a enfermagem e reduz o desperdício de papel/toner.
+
+**Cabeçalhos Fluidos:** Primeira página dedicada ao Brasão e Identificação Municipal. Páginas secundárias limpas, exibindo apenas o cabeçalho técnico simplificado do NIS.
+
+**Carimbo de Auditoria:** Rodapé dinâmico integrado que exibe de forma clara a data por extenso e o horário exato da geração (.strftime("%H:%M")) para controle de retirada.
 
 ---
 
