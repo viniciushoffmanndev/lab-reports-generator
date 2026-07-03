@@ -220,3 +220,5 @@ __marimo__/
 # Testes locais e relatórios de queries
 test/outputs/
 
+# Binários de infraestrutura local
+infra/
