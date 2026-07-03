@@ -46,12 +46,17 @@ LAB-REPORTS-GENERATOR/
 ## 🧠 Arquitetura do Sistema
 O sistema foi estruturado com foco em portabilidade autônoma em servidores Windows e isolamento de responsabilidades:
 
-⚙️ Engine de Renderização & Dependências (/libs & /templates)
-database.py / main.py: Camada que extrai os dados, realiza o tratamento preventivo de strings vazias e prepara o payload para o template engine Jinja2 injetar no arquivo templates/laudo.html.
-Portabilidade Gráfica do WeasyPrint: Para evitar instalações complexas no sistema operacional do servidor, a pasta libs/gtk/bin/ distribui as DLLs em C/C++ nativas do GNOME:
-libcairo-2.dll / libpixman-1-0.dll: Desenho vetorial e renderização geométrica.
-libpango-1.0-0.dll / libfontconfig-1.dll: Mapeamento tipográfico e fontes.
-libxml2-2.dll / libxslt-1.dll: Processamento estrutural do HTML.
+# ⚙️ Engine de Renderização & Dependências (/libs & /templates)
+
+**database.py / main.py:** Camada que extrai os dados, realiza o tratamento preventivo de strings vazias e prepara o payload para o template engine Jinja2 injetar no arquivo templates/laudo.html.
+
+**Portabilidade Gráfica do WeasyPrint:** Para evitar instalações complexas no sistema operacional do servidor, a pasta libs/gtk/bin/ distribui as DLLs em C/C++ nativas do GNOME:
+
+                libcairo-2.dll / libpixman-1-0.dll      Desenho vetorial e renderização geométrica.
+
+                libpango-1.0-0.dll / libfontconfig-1.dll      Mapeamento tipográfico e fontes.
+
+                libxml2-2.dll / libxslt-1.dll     Processamento estrutural do HTML.
 
 ---
 
