@@ -5,3 +5,6 @@ python-dotenv>=1.0.1 # Para ler o arquivo .env de forma segura.
 weasyprint>=61.0 # Motor moderno para converter nosso HTML/CSS em um PDF impecável.
 pydantic>=2.6.0 # Para validação estrita de dados (como garantir que o nome do paciente não venha vazio).
 httpx>=0.27.0 # Cliente HTTP moderno para execução de testes automatizados e benchmarks de performance.
+celery>=5.3.0 # Orquestrador de tarefas assíncronas e filas em segundo plano.
+redis>=5.0.0 # Banco em memória que servirá como message broker para o Celery.
+sentry-sdk[fastapi]>=2.0.0 # Monitoramento global de erros e performance em tempo real.
