@@ -6,14 +6,11 @@ import io
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-# Conecta até a pasta bin que você listou no comando tree
+# Conecta até a pasta bin do GTK portável
 gtk_bin_path = os.path.join(BASE_DIR, "libs", "gtk", "bin")
 
 if os.path.exists(gtk_bin_path):
-    # Avisa o Windows para incluir essa pasta na busca de executáveis/DLLs
     os.environ['PATH'] = gtk_bin_path + os.path.pathsep + os.environ['PATH']
-    
-    # Para o Python 3.8 ou superior no Windows, resolve o problema das DLLs locais
     if sys.version_info >= (3, 8):
         os.add_dll_directory(gtk_bin_path)
 else:
@@ -28,7 +25,8 @@ from pydantic import BaseModel, Field
 from weasyprint import HTML
 from datetime import datetime
 
-from database import get_db_connection
+# Importa a função otimizada e modularizada
+from database import buscar_exames_paciente_performance
 
 app = FastAPI(
     title="Lab Reports Generator",
@@ -53,33 +51,9 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
             detail="Formato de data de nascimento inválido. Use o padrão YYYY-MM-DD."
         )
 
-    conn = await get_db_connection()
-    
     try:
-        # Query com granularidade correta e inclusão das colunas de CNS e Nome da Mãe
-        # Query Oficial e Definitiva: Busca o CNS na tabela correta via LEFT JOIN
-        query = """
-            SELECT DISTINCT ON (er.cd_exame, p.cd_exame_procedimento)
-                er.cd_exame,
-                p.ds_procedimento,
-                er.ds_resultado,   
-                er.dt_resultado,
-                c.cpf,
-                c.dt_nascimento,
-                cns.cd_numero_cartao AS cns, -- Mudança aqui: Pegando da tabela correta!
-                c.nm_mae
-            FROM exame_requisicao er
-            INNER JOIN exame e ON er.cd_exame = e.cd_exame
-            INNER JOIN exame_procedimento p ON er.cd_exame_procedimento = p.cd_exame_procedimento
-            INNER JOIN agenda_gra_ate_horario a ON e.nm_paciente = a.nm_paciente
-            INNER JOIN usuario_cadsus c ON a.cd_usu_cadsus = c.cd_usu_cadsus
-            LEFT JOIN usuario_cadsus_cns cns ON c.cd_usu_cadsus = cns.cd_usu_cadsus AND cns.st_excluido = 0
-            WHERE REGEXP_REPLACE(TRIM(e.nm_paciente), '\s+', ' ', 'g') = REGEXP_REPLACE(TRIM($1), '\s+', ' ', 'g')
-              AND c.dt_nascimento = $2
-            ORDER BY er.cd_exame, p.cd_exame_procedimento;
-        """
-        
-        registros = await conn.fetch(query, nome_busca, data_busca)
+        # Chama a persistência externa que já resolve a sanitização por trás dos panos
+        registros = await buscar_exames_paciente_performance(nome_busca, data_busca)
         
         if not registros:
             raise HTTPException(
@@ -95,7 +69,7 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         hoje = datetime.now()
         data_geracao_extenso = f"{hoje.day} de {meses[hoje.month - 1]} de {hoje.year}"
         hora_minuto = hoje.strftime("%H:%M")
-        carimbo_hora = f"Relatório gerado em {data_geracao_extenso} às {hora_minuto} horas"
+        carimbo_hora = f"Relatório gerado em {data_geracao_extenso} às {hora_minuto} hours"
         texto_rodape_completo = carimbo_hora
         
         # Construção dinâmica das linhas da tabela HTML
@@ -134,7 +108,7 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         else:
             cpf_formatado = cpf_paciente
 
-        # Cadeia de substituição sequencial corrigida em html_final
+        # Cadeia de substituição sequencial
         html_final = html_content.replace("{{ nome_paciente }}", nome_busca)
         html_final = html_final.replace("{{ data_nascimento }}", data_nascimento_br)
         html_final = html_final.replace("{{ cpf_paciente }}", cpf_formatado)
@@ -152,7 +126,7 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
         return StreamingResponse(
             pdf_stream,
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename=laudo_{nome_arquivo_slug}.pdf"}
+            headers={"Content-Disposition": f"attachment; filename=exame_{nome_arquivo_slug}.pdf"}
         )
         
     except HTTPException as http_err:
@@ -160,5 +134,3 @@ async def gerar_relatorio_pdf(request: PacienteRequest):
     except Exception as e:
         print(f"Erro ao processar requisição: {e}")
         raise HTTPException(status_code=500, detail="Erro interno ao gerar o laudo médico.")
-    finally:
-        await conn.close()
